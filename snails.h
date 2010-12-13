@@ -18,13 +18,12 @@ public slots:
 	void start();
 private:
 	void drawfield(QPainter* painter);
-	void drawsnail(QPainter* painter, int position);
+	void drawsnail(QPainter* painter, int position, CAE_Object* aSnail);
 	int snailsCount();
 private:
 	CAE_Env* iEnv;
 	int iRoadWidth;
 	QPixmap iSnailPixmap;
-	QList<CAE_Object*> iSnails;
 };
 
 #endif // SNAILS_H

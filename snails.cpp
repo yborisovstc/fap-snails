@@ -33,11 +33,13 @@ void update_mass(CAE_Object* /*aObject*/, CAE_State* aState)
     const TUint32& coord_s = self.Inp("coord_self");
 
     TInt feed = KMaxFeed;
-    for (TInt i = 1; self.Input("coord_others", i) != NULL; i++) {
-	const TUint32& coord_o = self.Inp("coord_others", i);
+    for (CAE_State::mult_point_inp_iterator i = self.MpInput_begin("coord_others"); i != self.MpInput_end("coord_others"); i++)
+    {
+	const TUint32& coord_o = *i;
 	if (coord_o > coord_s && feed > 0)
 	    feed--;
     }
+
     TUint32 newmass = ~self + feed - 1;
     self = (newmass > KMass_Max) ? KMass_Max: ((newmass < KMass_Min) ? KMass_Min : newmass);
 }
@@ -92,9 +94,10 @@ void SMainWidget::drawfield(QPainter* painter)
 
 void SMainWidget::drawsnail(QPainter* painter, int position, CAE_Object* aSnail)
 {
-	int mass = ~*((CAE_TState<TUint32>*) aSnail->GetInput("mass"));
-	int coord = ~*((CAE_TState<TUint32>*) aSnail->GetOutput("coord"));
-	float massmult = 0.3 + 0.7*mass/KMass_Max;
+	CAE_TState<TUint32>& smass = *(aSnail->GetOutpState("mass")); 
+	CAE_TState<TUint32>& scoord = *(aSnail->GetOutpState("coord")); 
+
+	float massmult = 0.3 + 0.7 * ~smass/KMass_Max;
 	float imageheightmult = 1.0*(snailsCount()-1)/(snailsCount())/(snailsCount());
 	float posmult = 1.0*(position+1)/(snailsCount()+1);
 	QRect wnd = painter->window();
@@ -102,7 +105,7 @@ void SMainWidget::drawsnail(QPainter* painter, int position, CAE_Object* aSnail)
 	QSize nsize( wnd.height() * iSnailPixmap.width() / iSnailPixmap.height() * imageheightmult * massmult,
 		wnd.height()* imageheightmult * massmult);
 	QPixmap scaled = iSnailPixmap.scaled(nsize, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
-	QPoint npos(coord, wnd.height()*posmult - scaled.height() - iRoadWidth/2);
+	QPoint npos(~scoord, wnd.height()*posmult - scaled.height() - iRoadWidth/2);
 
 	painter->drawPixmap(npos, scaled);
 }

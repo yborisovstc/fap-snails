@@ -10,44 +10,19 @@
 #include <fapbase.h>
 #include "snails.h"
 
-static const char* KLogFileName = "ut_ext_mut.txt";
-static const char* KSpecFileName = "ut_spec_ext_mut.xml";
+//static const char* KLogFileName = "ut_ext_mut.txt";
+static const char* KLogFileName = "fap_snails_log.txt";
+//static const char* KSpecFileName = "ut_spec_ext_mut.xml";
+static const char* KSpecFileName = "ut_emtran_spec_2.xml";
 
 static const TUint32 KMass_Min = 1;
 static const TUint32 KMass_Max = 100;
 // For how many snails is the feed prepared on theirs way
 static const TUint32 KMaxFeed = 2;
 
-void update_mass(CAE_Object* aObject, CAE_State* aState);
-void update_coord(CAE_Object* aObject, CAE_State* aState);
-
-const TTransInfo KTinfo_Update_mass = TTransInfo(update_mass, "trans_mass");
-const TTransInfo KTinfo_Update_coord = TTransInfo(update_coord, "trans_coord");
-static const TTransInfo* tinfos[] = {&KTinfo_Update_mass, &KTinfo_Update_coord, NULL};
+static const TTransInfo* tinfos[] = {NULL};
 
 static const char* KSnailImage = "images/snail.png";
-
-void update_mass(CAE_Object* /*aObject*/, CAE_State* aState)
-{
-    CAE_TState<TUint32>& self = (CAE_TState<TUint32>&) *aState;
-    const TUint32& coord_s = self.Inp("coord_self");
-
-    TInt feed = KMaxFeed;
-    for (TInt i = 1; self.Input("coord_others", i) != NULL; i++) {
-	const TUint32& coord_o = self.Inp("coord_others", i);
-	if (coord_o > coord_s && feed > 0)
-	    feed--;
-    }
-    TUint32 newmass = ~self + feed - 1;
-    self = (newmass > KMass_Max) ? KMass_Max: ((newmass < KMass_Min) ? KMass_Min : newmass);
-}
-
-void update_coord(CAE_Object* /*aObject*/, CAE_State* aState)
-{
-    CAE_TState<TUint32>& self = (CAE_TState<TUint32>&) *aState;
-    const TUint32& mass_s = self.Inp("mass");
-    self = ~self + KMass_Max/mass_s;
-}
 
 
 SMainWidget::SMainWidget(QWidget* parent) : QWidget(parent), iRoadWidth(3), iSnailPixmap(KSnailImage)
@@ -92,8 +67,20 @@ void SMainWidget::drawfield(QPainter* painter)
 
 void SMainWidget::drawsnail(QPainter* painter, int position, CAE_Object* aSnail)
 {
-	int mass = ~*((CAE_TState<TUint32>*) aSnail->GetInput("mass"));
-	int coord = ~*((CAE_TState<TUint32>*) aSnail->GetOutput("coord"));
+    CAE_ConnPointBase* c_mass = aSnail->GetOutpN("mass");
+    CAE_Base* b_mass = c_mass->GetSrcPin("_1");
+    CAE_StateBase* sb_mass = b_mass->GetFbObj(sb_mass);
+    CAE_TState<TInt>& s_mass = *sb_mass;
+    TInt mass = ~s_mass;
+
+    CAE_ConnPointBase* c_coord = aSnail->GetOutpN("coord");
+    CAE_Base* b_coord = c_coord->GetSrcPin("_1");
+    CAE_StateBase* sb_coord = b_coord->GetFbObj(sb_coord);
+    CAE_TState<TInt>& s_coord = *sb_coord;
+    TInt coord = ~s_coord;
+
+//	int mass = ~*((CAE_TState<TUint32>*) aSnail->GetInput("mass"));
+//	int coord = ~*((CAE_TState<TUint32>*) aSnail->GetOutput("coord"));
 	float massmult = 0.3 + 0.7*mass/KMass_Max;
 	float imageheightmult = 1.0*(snailsCount()-1)/(snailsCount())/(snailsCount());
 	float posmult = 1.0*(position+1)/(snailsCount()+1);

@@ -36,6 +36,7 @@ SMainWidget::~SMainWidget()
 	delete iEnv;
 }
 
+// TODO [YB] GetNextCompByType is obsolete. To implement access to snails via conn point - see ut_emtran.cpp
 void SMainWidget::paintEvent(QPaintEvent* /*event*/)
 {
 	QPainter painter(this);

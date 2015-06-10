@@ -14,45 +14,58 @@
     <iobject type="none" id="main_test">
 	<mut node="self">
 	    <add>
+		<out id="snail_1">
+		    <src id="coord"/> <src id="mass"/> 
+		</out>
+
+		<logspec event="tran"> <logdata id="trex"/></logspec> 
+
+		<trans> 
+		    let Complex x y :: Struct Float Float := Struct (R::Float I::Float) x y
+		    let Complex x y :: Struct - - := Struct (R::Float I::Float) Float x Float y
+		    let cc1 :: Complex := Complex 4.0 6.0
+		    let cc2 :: Complex := 5.0 7.0
+		    let ff1 :: Float := Fld cc1 R
+		    let add x y :: Complex Complex Complex := Complex add fld x R fld y R add fld x I fld y I
+		    let dec x :: TInt TInt := sub x 1
+		    let restrbot x lim :: TInt TInt TInt := if lt x lim lim x
+		    let restrtop x lim :: TInt TInt TInt := if gt x lim lim x
+		    let restr x y z :: TInt TInt TInt TInt := restrbot restrtop x z y
+		    let rres :: TInt := restr 20 6 8 
+		</trans>
+
 		<iobject type="none" id="snail" quiet="yes"> 
 		    <mut node="self">
 			<add>
 			    <inp id="coord_others"/>
 			    <out id="coord"/>
 			    <out id="mass"/>
+			    <out id="outp"> <src id="coord"/> <src id="mass"/> </out>
 
 			    <logspec  event="cre"> <logdata id="new"/> </logspec>
 
+			    <trans> 
+				let KMaxFeed :: TInt := 2 
+				let KMinMass :: TInt := 1
+				let KMaxMass :: TInt := 100 
+			    </trans>
+
 			    <state type="StInt" id="mass" init="2"> 
-				<logspec event="upd"> <logdata id="new"/> </logspec> 
+				<logspec event="upd"> <logdata id="new"/></logspec> 
+				<logspec event="tran"> <logdata id="trex"/></logspec> 
 				<inp id="self"/> <inp id="coord_self"/> <inp id="coord_others"/> 
 				<trans>
-				    let KMinMass :: TInt := 1
-				    let KMaxMass :: TInt := 100
-				    let KMaxFeed :: TInt := 2
 				    let icothers :: [TInt] := inp coord_others
-				    let icself :: TInt := inp coord_self
-				    let self :: TInt := inp self
-				    let ffun :: TBool TInt := lt icself
-				    let infront :: [TInt] := filter ffun icothers
-				    let infrontcnt :: TInt := count infront
-				    let rmass :: TInt := sub add self sub KMaxFeed infrontcnt 1
-				    let mass_toplim :: TInt := if gt rmass KMaxMass KMaxMass rmass
-				    let mass :: TInt := if lt mass_toplim KMinMass KMinMass mass_toplim
-				    set mass
+				    let infrontcnt :: TInt := count filter lt inp coord_self icothers
+				    let rmass :: TInt := sub add inp self sub KMaxFeed infrontcnt 1
+				    restr rmass KMinMass KMaxMass
 				</trans>
 			    </state>
 
 			    <state type="StInt" id="coord" len="4" init="0"> 
 				<logspec event="upd"> <logdata id="cur"/> <logdata id="new"/> </logspec> 
 				<inp id="self"/> <inp id="mass"/> 
-				<trans>
-				    let KMinMass :: TInt := 1
-				    let KMaxMass :: TInt := 100
-				    let self :: TInt := inp self
-				    let mass :: TInt := inp mass
-				    set add self div KMaxMass mass
-				</trans>
+				<trans> add inp self div KMaxMass inp mass </trans>
 			    </state>
 
 			    <conn id="mass.self" pair="mass.output"/> 
@@ -63,6 +76,11 @@
 			    <ext id="coord_others" pair="mass.coord_others"/>
 			    <ext id="coord" pair="coord.output"/>
 			    <ext id="mass" pair="mass.output"/>
+
+			    <extc id="outp">
+				<srcext id="coord" pair="coord.output"/>
+				<srcext id="mass" pair="mass.output"/>
+			    </extc>
 			</add>
 		    </mut>
 
@@ -75,6 +93,9 @@
 		<conn id="snail_1.coord_others" pair="snail_2.coord"/><conn id="snail_1.coord_others" pair="snail_3.coord"/>
 		<conn id="snail_2.coord_others" pair="snail_1.coord"/> <conn id="snail_2.coord_others" pair="snail_3.coord"/>
 		<conn id="snail_3.coord_others" pair="snail_1.coord"/> <conn id="snail_3.coord_others" pair="snail_2.coord"/>
+
+		<extc id="snail_1"> <srcext id="coord" pair="snail_1.coord"/> <srcext id="mass" pair="snail_1.mass"/> </extc>
+		<extc id="snail_1"> <srcext id="coord" pair="snail_2.coord"/> <srcext id="mass" pair="snail_2.mass"/> </extc>
 
 	    </add>
 	</mut>
